@@ -14,16 +14,16 @@ Documentation and configuration of my homelab on a old laptop
   - tls
   - DNS
 - Deploying everything GitOps
-  - FluxCD
+  - FluxCD or ArgoCD
 
 ## TODO
 
-- [] Solve issue installing K3S agent on same device
-- [] 
-- [] 
-- [] 
-- [] 
-- [] 
+- [ ] Install ProxMox
+- [ ] Install K3S Master
+- [ ] Install K3S Agent
+- [ ] Install Prometheus and Grafana on Kubernetes
+- [ ] 
+- [ ] 
 
 # Log
 
