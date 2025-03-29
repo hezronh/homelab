@@ -15,3 +15,17 @@ Documentation and configuration of my homelab on a old laptop
   - DNS
 - Deploying everything GitOps
   - FluxCD
+
+## TODO
+
+- [] Solve issue installing K3S agent on same device
+- [] 
+- [] 
+- [] 
+- [] 
+- [] 
+
+# Log
+
+## March 2025
+- Installed K3S
