@@ -2,8 +2,8 @@
 - name: Configure Tailscale Node
   hosts: tailscale
   become: true
-  vars:
-    tailscale_authkey: "tskey-xxxxxxxxxxxxxxxxxx"  # <-- Jouw Tailscale Auth Key
+  vars_files:
+    - vars/secrets.yml    # <-- authkey with ansible vault
 
   tasks:
     - name: Ensure SSH directory exists
