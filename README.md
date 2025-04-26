@@ -19,7 +19,7 @@ Deze setup voorziet in:
 - GitOps met [ArgoCD](https://argoproj.github.io/argo-cd/)
 - Monitoring met [Prometheus](https://prometheus.io/), [Grafana](https://grafana.com/)
 - Logging met [Loki](https://grafana.com/oss/loki/)
-- Automatisering via [Ansible](https://www.ansible.com/)
+- Automatisering via [Ansible](https://www.ansible.com/) en [Terraform](https://www.terraform.com/)
 - Secrets via [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets)
 
 ## 📂 Structuur
