@@ -1,2 +1,3 @@
 *.tfvars
 /scripts/
+/ansible/inventory.ini
