@@ -3,7 +3,7 @@
   hosts: tailscale
   become: true
   vars_files:
-    - vars/secrets.yml    # <-- authkey with ansible vault
+    - vars/secrets.yml  # Bevat jouw tailscale_authkey via Ansible Vault
 
   tasks:
     - name: Ensure SSH directory exists
@@ -22,24 +22,39 @@
         group: ubuntu
         mode: '0600'
 
-    - name: Install curl
+    - name: Install required packages
       ansible.builtin.apt:
-        name: curl
+        name:
+          - curl
+          - gnupg
+          - apt-transport-https
         state: present
         update_cache: true
 
-    - name: Download and install Tailscale
+    - name: Download Tailscale GPG key
       ansible.builtin.get_url:
-        url: https://pkgs.tailscale.com/stable/tailscale_amd64.deb
-        dest: /tmp/tailscale.deb
+        url: https://pkgs.tailscale.com/stable/ubuntu/jammy.gpg
+        dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
         mode: '0644'
+
+    - name: Add Tailscale apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu jammy main"
+        state: present
+        filename: tailscale
+
+    - name: Update apt cache after adding Tailscale repo
+      ansible.builtin.apt:
+        update_cache: true
 
     - name: Install Tailscale package
       ansible.builtin.apt:
-        deb: /tmp/tailscale.deb
+        name: tailscale
+        state: present
 
-    - name: Connect to Tailscale
+    - name: Connect to Tailscale using AuthKey
       ansible.builtin.shell: |
+        set -o pipefail
         tailscale up --authkey {{ tailscale_authkey }}
       args:
         executable: /bin/bash

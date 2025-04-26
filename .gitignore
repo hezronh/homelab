@@ -53,3 +53,4 @@ __pycache__/
 terraform/proxmox-tailscale/.terraform.tfstate.lock.info
 .gitignore
 terraform/proxmox-tailscale/.terraform.lock.hcl
+ansible/ansible.cfg
