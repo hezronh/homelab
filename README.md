@@ -38,5 +38,9 @@ Om een start te maken met mijn homelab gebruik mijn oude laptop (Asus ZenBook Pr
 - Control Node: MacBook (Ansible + Terraform geïnstalleerd via Homebrew)
 - Managed Nodes: Proxmox servers, alleen SSH-enabled, geen Ansible of Terraform lokaal geïnstalleerd.
 
+## 🚀 Security First
+
+In dit project wordt automatisch password-based SSH login uitgeschakeld na eerste configuratie, zodat alleen SSH key-authenticatie mogelijk is.
+Secrets zoals Tailscale AuthKeys zijn veilig versleuteld via Ansible Vault.
 
 ---
