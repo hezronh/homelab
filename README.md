@@ -35,8 +35,8 @@ Om een start te maken met mijn homelab gebruik mijn oude laptop (Asus ZenBook Pr
 ## 🏗 Architecture
 
 ### Ansible + Terraform
-Control Node: MacBook (Ansible + Terraform geïnstalleerd via Homebrew)
-Managed Nodes: Proxmox servers, alleen SSH-enabled, geen Ansible of Terraform lokaal geïnstalleerd.
+- Control Node: MacBook (Ansible + Terraform geïnstalleerd via Homebrew)
+- Managed Nodes: Proxmox servers, alleen SSH-enabled, geen Ansible of Terraform lokaal geïnstalleerd.
 
 
 ---
