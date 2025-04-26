@@ -1,0 +1,46 @@
+---
+- name: Configure Tailscale Node
+  hosts: tailscale
+  become: true
+  vars:
+    tailscale_authkey: "tskey-xxxxxxxxxxxxxxxxxx"  # <-- Jouw Tailscale Auth Key
+
+  tasks:
+    - name: Ensure SSH directory exists
+      ansible.builtin.file:
+        path: /home/ubuntu/.ssh
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0700'
+
+    - name: Upload authorized SSH key
+      ansible.builtin.copy:
+        src: ~/.ssh/id_rsa.pub
+        dest: /home/ubuntu/.ssh/authorized_keys
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    - name: Install curl
+      ansible.builtin.apt:
+        name: curl
+        state: present
+        update_cache: true
+
+    - name: Download and install Tailscale
+      ansible.builtin.get_url:
+        url: https://pkgs.tailscale.com/stable/tailscale_amd64.deb
+        dest: /tmp/tailscale.deb
+        mode: '0644'
+
+    - name: Install Tailscale package
+      ansible.builtin.apt:
+        deb: /tmp/tailscale.deb
+
+    - name: Connect to Tailscale
+      ansible.builtin.shell: |
+        tailscale up --authkey {{ tailscale_authkey }}
+      args:
+        executable: /bin/bash
+        creates: /var/lib/tailscale/tailscaled.state
