@@ -10,8 +10,7 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 terraform.tfplan
-/ansible/playbooks/scripts/*.sh
-
+ansible/playbooks/scripts/
 
 # Ansible sensitive files
 /ansible/inventory.ini
