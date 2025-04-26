@@ -49,3 +49,6 @@ __pycache__/
 # Backup files
 *~
 *.bak
+terraform/proxmox-tailscale/.terraform.tfstate.lock.info
+.gitignore
+terraform/proxmox-tailscale/.terraform.lock.hcl
