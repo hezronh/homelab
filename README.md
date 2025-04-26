@@ -1,31 +1,35 @@
-# Homelab
+# 🏡 Homelab Automation with Proxmox
 
-Documentation and configuration of my homelab on a old laptop
+Welkom in mijn persoonlijke homelab repository. Deze repository bevat de volledige broncode en documentatie voor mijn persoonlijke homelab. 
+De architectuur is ontworpen met een focus op professionaliteit, automatisering en reproduceerbaarheid.
 
-## Tooling
+Deze setup voorziet in:
+- Volledige provisioning en configuratie via Ansible.
+- Automatisering van VM-creatie en infrastructuurbeheer met Terraform.
+- Beheer van Kubernetes-resources door middel van GitOps met ArgoCD.
+- Monitoring en logging met behulp van Prometheus, Grafana en Loki.
+- Veilige en eenvoudige remote toegang via Tailscale VPN.
+- Robuust en veilig secret management, geschikt voor publieke repositories.
 
-- K3S
+> 💡 Doelstelling: Een professioneel, schaalbaar en volledig reproduceerbaar homelab-platform creëren dat als portfolio-project kan dienen.
 
-## Goals
+## 🛠️ Technologieën
 
-- Run Prometheus and Grafana Stack
-- Have Grafana Dashboard available with a URL 
-  - ingress
-  - tls
-  - DNS
-- Deploying everything GitOps
-  - FluxCD or ArgoCD
+- Kubernetes via [k3s](https://k3s.io/)
+- GitOps met [ArgoCD](https://argoproj.github.io/argo-cd/)
+- Monitoring met [Prometheus](https://prometheus.io/), [Grafana](https://grafana.com/)
+- Logging met [Loki](https://grafana.com/oss/loki/)
+- Automatisering via [Ansible](https://www.ansible.com/)
+- Secrets via [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets)
 
-## TODO
+## 📂 Structuur
 
-- [ ] Install ProxMox
-- [ ] Install K3S Master
-- [ ] Install K3S Agent
-- [ ] Install Prometheus and Grafana on Kubernetes
-- [ ] 
-- [ ] 
+Zie `ansible/`, `cluster/`, en `inventory/` voor het volledige overzicht.
 
-# Log
+> Coming Soon - Work in Progress.
 
-## March 2025
-- Installed K3S
+## ⚙️ Hardware
+
+Om een start te maken met mijn homelab gebruik mijn oude laptop (Asus ZenBook Pro UX550VE), dit zal ik later uitbreiden met Mini PCs.
+
+---
