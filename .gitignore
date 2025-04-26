@@ -1,3 +1,52 @@
+# Terraform sensitive files
+*.tfstate
+*.tfstate.backup
 *.tfvars
+*.tfvars.json
+.terraform/
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+terraform.tfplan
 /scripts/
+
+
+# Ansible sensitive files
 /ansible/inventory.ini
+inventory.ini
+*.retry
+*.vault
+*.secret
+*.pem
+*.key
+*.crt
+
+# SSH keys
+*.pub
+*.id_rsa
+*.id_rsa.pub
+*.ssh/
+
+# Ansible facts cache (optioneel, als je die ooit gebruikt)
+.fact_cache/
+
+# Visual Studio Code settings
+.vscode/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# macOS systeemfiles
+.DS_Store
+
+# Logs
+*.log
+
+# Backup files
+*~
+*.bak
