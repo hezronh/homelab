@@ -3,7 +3,7 @@
   hosts: proxmox
   become: true
   vars:
-    vm_id: 9001
+    vm_id: 10000
     vm_name: ubuntu2204-cloudinit
     cloud_init_image_url: "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
     cloud_init_image_path: "/root/jammy-server-cloudimg-amd64.img"
