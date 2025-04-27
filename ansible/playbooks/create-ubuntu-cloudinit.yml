@@ -20,11 +20,19 @@
 
     - name: Create VM for Ubuntu Cloud-Init Template
       ansible.builtin.command:
-        cmd: "qm create {{ vm_id }} --name {{ vm_name }} --memory 2048 --net0 virtio,bridge=vmbr0 --serial0 socket --vga serial0 --scsihw virtio-scsi-pci --ide2 {{ storage_pool }}:cloudinit"
+        cmd: >
+          qm create {{ vm_id }} 
+          --name {{ vm_name }}
+          --memory 2048 
+          --net0 virtio,bridge=vmbr0 
+          --serial0 socket 
+          --vga serial0 
+          --scsihw virtio-scsi-pci 
+          --ide2 {{ storage_pool }}:cloudinit
       args:
         creates: "/etc/pve/qemu-server/{{ vm_id }}.conf"
       changed_when: false
-
+      
     - name: Import Ubuntu Cloud-Init image into VM
       ansible.builtin.command:
         cmd: "qm set {{ vm_id }} --scsi0 {{ storage_pool }}:0,import-from={{ cloud_init_image_path }}"
