@@ -1,0 +1,57 @@
+---
+- name: Create Ubuntu Cloud-Init Template for Proxmox
+  hosts: proxmox
+  become: true
+  vars:
+    vm_id: 9001
+    vm_name: ubuntu2204-cloudinit
+    cloud_init_image_url: "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
+    cloud_init_image_path: "/root/jammy-server-cloudimg-amd64.img"
+    storage_pool: "local-lvm"
+    snippet_dir: "/var/lib/vz/snippets"
+    snippet_file: "qemu-guest-agent-ubuntu.yml"
+
+  tasks:
+    - name: Download Ubuntu Cloud-Init image
+      ansible.builtin.get_url:
+        url: "{{ cloud_init_image_url }}"
+        dest: "{{ cloud_init_image_path }}"
+        mode: '0644'
+
+    - name: Create VM for Ubuntu Cloud-Init Template
+      ansible.builtin.command:
+        cmd: "qm create {{ vm_id }} --name {{ vm_name }} --memory 2048 --net0 virtio,bridge=vmbr0 --serial0 socket --vga serial0 --scsihw virtio-scsi-pci --ide2 {{ storage_pool }}:cloudinit"
+      args:
+        creates: "/etc/pve/qemu-server/{{ vm_id }}.conf"
+      changed_when: false
+
+    - name: Import Ubuntu Cloud-Init image into VM
+      ansible.builtin.command:
+        cmd: "qm set {{ vm_id }} --scsi0 {{ storage_pool }}:0,import-from={{ cloud_init_image_path }}"
+      changed_when: false
+
+    - name: Convert VM to Template
+      ansible.builtin.command:
+        cmd: "qm template {{ vm_id }}"
+      changed_when: false
+
+    - name: Ensure snippet directory exists
+      ansible.builtin.file:
+        path: "{{ snippet_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Create snippet for qemu-guest-agent on Ubuntu
+      ansible.builtin.copy:
+        dest: "{{ snippet_dir }}/{{ snippet_file }}"
+        content: |
+          #cloud-config
+          runcmd:
+            - apt update
+            - apt install -y qemu-guest-agent
+            - systemctl enable --now qemu-guest-agent
+        owner: root
+        group: root
+        mode: '0644'
