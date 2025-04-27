@@ -1,11 +1,11 @@
-variable "vm_ssh_key" {
-  description = "Public SSH key to inject into the VM via cloud-init."
-  type        = string
-  validation {
-    condition     = can(regex("^ssh-(rsa|ed25519)\\s", var.vm_ssh_key))
-    error_message = "The SSH key must be a valid public key starting with 'ssh-rsa' or 'ssh-ed25519'."
-  }
-}
+# variable "vm_ssh_key" {
+#   description = "Public SSH key to inject into the VM via cloud-init."
+#   type        = string
+#   validation {
+#     condition     = can(regex("^ssh-(rsa|ed25519)\\s", var.vm_ssh_key))
+#     error_message = "The SSH key must be a valid public key starting with 'ssh-rsa' or 'ssh-ed25519'."
+#   }
+# }
 
 variable "pm_api_url" {
   description = "Proxmox API base URL, e.g., https://proxmox.example.com:8006/api2/json"
@@ -14,6 +14,12 @@ variable "pm_api_url" {
     condition     = can(regex("^https://", var.pm_api_url))
     error_message = "The Proxmox API URL must start with https://"
   }
+}
+
+variable "pm_ipaddress" {
+  description = "IP Address"
+  type        = string
+  sensitive   = true
 }
 
 variable "pm_api_token_secret" {

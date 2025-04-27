@@ -1,0 +1,77 @@
+---
+- name: Create VM from Proxmox Template
+  hosts: build
+  tasks:
+    - name: Install python3-pip
+      ansible.builtin.yum:
+        name: python3-pip
+        state: present
+      become: yes
+
+    - name: Install setuptools module via pip
+      ansible.builtin.pip:
+        name: setuptools
+        state: present
+
+    - name: Install requests module via pip
+      ansible.builtin.pip:
+        name: requests
+        state: present
+
+    - name: Install proxmoxer module via pip
+      ansible.builtin.pip:
+        name: proxmoxer
+        state: present
+
+    - name: Clone proxmox template
+      community.general.proxmox_kvm:
+        node: proxmox
+        api_user: "root@pam"
+        api_password: "{{ proxmox_pass }}"
+        api_host: "< Input IP Here >"
+        api_port: 8006
+        storage: "local-lvm"
+        full: true
+        pool: "< Input Pool Name if used >"
+        clone: "< Input Template name"
+        name: "{{ vm_name }}"
+
+    - name: wait 10 seconds
+      ansible.builtin.pause:
+        seconds: 10
+
+    - name: Start VM
+      community.general.proxmox_kvm:
+        node: proxmox
+        api_user: "root@pam"
+        api_password: "{{ proxmox_pass }}"
+        api_host: "< Input IP Here >"
+        api_port: 8006
+        pool: "< Input Pool Name if used >"
+        name: "{{ vm_name }}"
+        state: started
+
+    - name: wait 20 seconds
+      ansible.builtin.pause:
+        seconds: 20
+
+- name: Set VM IP and Hostname
+  hosts: 172.16.1.200
+  tasks:
+    - name: Update IP
+      ansible.builtin.lineinfile:
+        path: /etc/sysconfig/network-scripts/ifcfg-ens18
+        regex: "IPADDR=172.16.1.200"
+        line: "IPADDR={{ new_IP }}"
+
+    - name: Update Hostname
+      ansible.builtin.hostname:
+        name: "{{ hostname }}.dragon.local"
+
+    - name: Reboot
+      ansible.builtin.command: "init 6"
+      ignore_errors: true
+
+    - name: Pause for 30 seconds to wait for reboot
+      ansible.builtin.pause:
+        seconds: "10"

@@ -9,6 +9,7 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+variables.tf
 terraform.tfplan
 ansible/playbooks/scripts/
 
@@ -55,3 +56,6 @@ terraform/proxmox-tailscale/.terraform.tfstate.lock.info
 terraform/proxmox-tailscale/.terraform.lock.hcl
 ansible/ansible.cfg
 ansible/vars/secrets.yml.new
+terraform/terraform-cloudinit/user-data.yaml
+terraform/cloudinit-vm/variables.tf
+terraform/proxmox-tailscale/variables.tf

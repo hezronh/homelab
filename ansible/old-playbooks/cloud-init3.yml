@@ -1,0 +1,160 @@
+---
+- name: Prepare Proxmox template with Cloud-Init (Production-Ready)
+  hosts: proxmox
+  become: false
+  vars:
+    proxmox_node: "pve"
+    proxmox_storage: "local-lvm"
+    disk_device: "scsi0"
+
+    cloud_image_url: "https://cloud-images.ubuntu.com/releases/jammy/release/ubuntu-22.04-server-cloudimg-amd64.img"
+    cloud_image_storage: "/var/lib/vz/template/iso"
+    cloud_image_name: "ubuntu-22.04-server-cloudimg-amd64.img"
+
+    vm_id: 5001
+    cores: 2
+    memory: 2048
+    resize_disk: 10
+    qemu_agent: true
+    uefi: true
+    template_name: "ubuntu-22.04-cloudinit-template"
+
+    user_data_file: "user-data.yaml.j2"
+    user_data_file_storage: "local"
+    user_data_file_storage_path: "/var/lib/vz/snippets"
+
+    ciuser: "serveradmin"
+
+  tasks:
+    - name: Include vault secrets
+      ansible.builtin.include_vars:
+        file: ../vars/secrets.yml
+
+    - name: Generate SHA-512 hashed password
+      ansible.builtin.set_fact:
+        encrypted_password: "{{ cipassword | password_hash('sha512') }}"
+
+    - name: Ensure cloud image is downloaded
+      ansible.builtin.get_url:
+        url: "{{ cloud_image_url }}"
+        dest: "{{ cloud_image_storage }}/{{ cloud_image_name }}"
+        owner: root
+        group: root
+        mode: '0644'
+        timeout: 60
+
+    - name: Check if VM ID is already used
+      ansible.builtin.shell: "qm status {{ vm_id }}"
+      register: vm_status
+      ignore_errors: true
+      changed_when: false
+      args:
+        executable: /bin/bash
+
+    - name: Create VM if it does not exist
+      ansible.builtin.shell: |
+        qm create {{ vm_id }} \
+          --name {{ template_name }} \
+          --memory {{ memory }} \
+          --cores {{ cores }} \
+          --net0 virtio,bridge=vmbr0
+      when: vm_status.rc != 0
+      changed_when: true
+      args:
+        executable: /bin/bash
+
+    - name: Import cloud image into Proxmox storage
+      ansible.builtin.shell: |
+        qm importdisk {{ vm_id }} {{ cloud_image_storage }}/{{ cloud_image_name }} {{ proxmox_storage }}
+      when: vm_status.rc != 0
+      changed_when: true
+      args:
+        executable: /bin/bash
+
+    - name: Attach imported disk to VM
+      ansible.builtin.shell: |
+        qm set {{ vm_id }} --scsihw virtio-scsi-pci --{{ disk_device }} {{ proxmox_storage }}:vm-{{ vm_id }}-disk-0
+      when: vm_status.rc != 0
+      changed_when: true
+      args:
+        executable: /bin/bash
+
+    - name: Configure VM with Cloud-Init drive, serial console, and DHCP networking
+      ansible.builtin.shell: |
+        qm set {{ vm_id }} \
+          --ide2 {{ proxmox_storage }}:cloudinit \
+          --boot c \
+          --bootdisk {{ disk_device }} \
+          --serial0 socket \
+          --vga serial0 \
+          --citype nocloud \
+          --ipconfig0 ip=dhcp
+      when: vm_status.rc != 0
+      changed_when: true
+      args:
+        executable: /bin/bash
+
+    - name: Copy SSH key to Proxmox for Cloud-Init
+      ansible.builtin.copy:
+        dest: "{{ user_data_file_storage_path }}/{{ vm_id }}.pub"
+        content: "{{ sshkey }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Attach SSH key and user/password to VM
+      ansible.builtin.shell: |
+        qm set {{ vm_id }} --sshkeys {{ user_data_file_storage_path }}/{{ vm_id }}.pub --ciuser {{ ciuser }} --cipassword "{{ cipassword }}"
+      changed_when: true
+      args:
+        executable: /bin/bash
+
+    - name: Remove temporary SSH key from Proxmox
+      ansible.builtin.file:
+        path: "{{ user_data_file_storage_path }}/{{ vm_id }}.pub"
+        state: absent
+
+    - name: Enable QEMU Agent if requested
+      ansible.builtin.shell: |
+        qm set {{ vm_id }} --agent 1
+      when: qemu_agent
+      changed_when: true
+      args:
+        executable: /bin/bash
+
+    - name: Resize VM disk
+      ansible.builtin.shell: |
+        qm resize {{ vm_id }} {{ disk_device }} +{{ resize_disk }}G
+      changed_when: true
+      args:
+        executable: /bin/bash
+
+    - name: Deploy user-data file to Proxmox snippets storage
+      ansible.builtin.template:
+        src: "./{{ user_data_file }}"
+        dest: "{{ user_data_file_storage_path }}/user-data.yaml"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Attach custom user-data to VM
+      ansible.builtin.shell: |
+        qm set {{ vm_id }} --cicustom "user={{ user_data_file_storage }}:snippets/user-data.yaml"
+      changed_when: true
+      args:
+        executable: /bin/bash
+
+    - name: Enable UEFI if requested
+      ansible.builtin.shell: |
+        qm set {{ vm_id }} --bios ovmf --machine q35 --efidisk0 {{ proxmox_storage }}:0
+      when: uefi
+      changed_when: true
+      args:
+        executable: /bin/bash
+
+    - name: Convert VM to template
+      ansible.builtin.shell: |
+        qm template {{ vm_id }}
+      changed_when: true
+      args:
+        executable: /bin/bash
