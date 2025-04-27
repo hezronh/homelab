@@ -1,0 +1,27 @@
+---
+- name: Install QEMU Guest Agent on Proxmox VM
+  hosts: cloudinit_vms
+  become: true
+  vars:
+    qemu_agent_package: "qemu-guest-agent"
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install QEMU Guest Agent package
+      ansible.builtin.apt:
+        name: "{{ qemu_agent_package }}"
+        state: present
+
+    - name: Ensure QEMU Guest Agent service is enabled
+      ansible.builtin.systemd:
+        name: qemu-guest-agent
+        enabled: true
+
+    - name: Ensure QEMU Guest Agent service is started
+      ansible.builtin.systemd:
+        name: qemu-guest-agent
+        state: started

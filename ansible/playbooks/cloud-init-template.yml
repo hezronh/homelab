@@ -1,0 +1,74 @@
+---
+- name: Create a Cloud-Init ready VM Template on Proxmox
+  hosts: proxmox
+  become: true
+  vars:
+    vm_id: 8000
+    vm_name: debian12-cloudinit
+    cloud_init_image_url: "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
+    cloud_init_image_path: "/root/debian-12-genericcloud-amd64.qcow2"
+    storage_pool: "local-lvm"
+    snippet_dir: "/var/lib/vz/snippets"
+    snippet_file: "qemu-guest-agent.yml"
+
+  tasks:
+    - name: Ensure snippet directory exists
+      ansible.builtin.file:
+        path: "{{ snippet_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Download Cloud-Init image if not present
+      ansible.builtin.get_url:
+        url: "{{ cloud_init_image_url }}"
+        dest: "{{ cloud_init_image_path }}"
+        mode: '0644'
+
+    - name: Create a new VM if it does not exist
+      ansible.builtin.command:
+        cmd: "qm create {{ vm_id }} --name {{ vm_name }} --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0"
+      args:
+        creates: "/etc/pve/qemu-server/{{ vm_id }}.conf"
+      changed_when: false
+
+    - name: Import the Cloud-Init disk into VM
+      ansible.builtin.command:
+        cmd: "qm importdisk {{ vm_id }} {{ cloud_init_image_path }} {{ storage_pool }}"
+      register: importdisk_result
+      changed_when: false
+
+    - name: Attach the imported disk to VM
+      ansible.builtin.command:
+        cmd: "qm set {{ vm_id }} --scsi0 {{ storage_pool }}:vm-{{ vm_id }}-disk-0"
+      changed_when: false
+
+    - name: Add Cloud-Init drive to VM
+      ansible.builtin.command:
+        cmd: "qm set {{ vm_id }} --ide2 {{ storage_pool }}:cloudinit"
+      changed_when: false
+
+    - name: Set boot order and serial console for Cloud-Init
+      ansible.builtin.command:
+        cmd: "qm set {{ vm_id }} --boot order=scsi0 --serial0 socket --vga serial0"
+      changed_when: false
+
+    - name: Create snippet for qemu-guest-agent installation
+      ansible.builtin.copy:
+        dest: "{{ snippet_dir }}/{{ snippet_file }}"
+        content: |
+          #cloud-config
+          runcmd:
+            - apt update
+            - apt install -y qemu-guest-agent
+            - systemctl enable qemu-guest-agent
+            - systemctl start qemu-guest-agent
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Convert VM to Template
+      ansible.builtin.command:
+        cmd: "qm template {{ vm_id }}"
+      changed_when: false
