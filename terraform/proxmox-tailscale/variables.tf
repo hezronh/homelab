@@ -9,3 +9,9 @@ variable "vm_password" {
   type        = string
   sensitive   = true
 }
+
+variable "vm_ssh_key" {
+  description = "Public SSH key to inject via cloud-init."
+  type        = string
+}
+

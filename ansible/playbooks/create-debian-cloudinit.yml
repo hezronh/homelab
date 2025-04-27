@@ -1,0 +1,57 @@
+---
+- name: Create Cloud-Init Template for Proxmox
+  hosts: proxmox
+  become: true
+  vars:
+    vm_id: 9000
+    vm_name: debian12-cloudinit
+    cloud_init_image_url: "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
+    cloud_init_image_path: "/root/debian-12-genericcloud-amd64.qcow2"
+    storage_pool: "local-lvm"
+    snippet_dir: "/var/lib/vz/snippets"
+    snippet_file: "qemu-guest-agent.yml"
+
+  tasks:
+    - name: Download Cloud-Init image
+      ansible.builtin.get_url:
+        url: "{{ cloud_init_image_url }}"
+        dest: "{{ cloud_init_image_path }}"
+        mode: '0644'
+
+    - name: Create VM for Cloud-Init Template
+      ansible.builtin.command:
+        cmd: "qm create {{ vm_id }} --name {{ vm_name }}"
+      args:
+        creates: "/etc/pve/qemu-server/{{ vm_id }}.conf"
+      changed_when: false
+
+    - name: Import Cloud-Init image into VM
+      ansible.builtin.command:
+        cmd: "qm set {{ vm_id }} --scsi0 {{ storage_pool }}:0,import-from={{ cloud_init_image_path }}"
+      changed_when: false
+
+    - name: Convert VM to Template
+      ansible.builtin.command:
+        cmd: "qm template {{ vm_id }}"
+      changed_when: false
+
+    - name: Ensure snippet directory exists
+      ansible.builtin.file:
+        path: "{{ snippet_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Create snippet for qemu-guest-agent
+      ansible.builtin.copy:
+        dest: "{{ snippet_dir }}/{{ snippet_file }}"
+        content: |
+          #cloud-config
+          runcmd:
+            - apt update
+            - apt install -y qemu-guest-agent
+            - systemctl start qemu-guest-agent
+        owner: root
+        group: root
+        mode: '0644'

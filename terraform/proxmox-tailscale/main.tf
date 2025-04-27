@@ -8,59 +8,45 @@ terraform {
 }
 
 provider "proxmox" {
-  endpoint = "https://192.168.68.70:8006/api2/json"
-  insecure = true
-  username = "root@pam"
-  password = var.proxmox_password
+  pm_api_url       = "https://192.168.68.70:8006/api2/json"
+  pm_tls_insecure = true
+  pm_user         = "root@pam"
+  pm_password     = var.proxmox_password
 }
 
-resource "proxmox_virtual_environment_vm" "tailscale_vm" {
-  name      = "tailscale-node"
-  node_name = "pve"         # <-- jouw servernaam in Proxmox
-
-  clone {
-    vm_id = 9000                           # <-- jouw ubuntu-base template ID
-  }
-
-  cpu {
-    cores = 1
-  }
-
-  memory {
-    dedicated = 512
-  }
+resource "proxmox_vm_qemu" "tailscale_vm" {
+  name         = "tailscale-node"
+  target_node  = "pve"        # <-- de naam van je Proxmox node
+  clone        = "ubuntu-base-vm" # <-- de naam van je template, NIET de ID
+  full_clone   = true         # <-- aanbevolen voor cloud-init VM's
+  agent        = 1            # QEMU Guest Agent inschakelen
+  os_type      = "cloud-init"
+  
+  cores        = 1
+  sockets      = 1
+  memory       = 512
 
   disk {
-    datastore_id = "local-lvm"
-    size         = 8                       # Disk size in GB
-    interface    = "scsi0"                 # ✅ Verplicht in bpg provider
+    slot           = "scsi0"
+    size           = "8G"
+    type           = "disk"
+    storage        = "local-lvm"
+    discard        = true
+    backup         = false
   }
 
-  network_device {
-    bridge = "vmbr0"
+  network {
+    id = 0
     model  = "virtio"
+    bridge = "vmbr0"
   }
 
-  operating_system {
-    type = "l26"
-  }
+  ipconfig0 = "ip=192.168.68.72/24,gw=192.168.68.1"
 
-  initialization {
-    user_account {
-      username = "ubuntu"
-      password = var.vm_password
-    }
+  sshkeys = <<EOF
+  ${var.vm_ssh_key}
+  EOF
 
-    ip_config {
-      ipv4 {
-        address = "dhcp"
-      }
-    }
-  }
-
-  agent {
-    enabled = true
-  }
- 
-  
+  # Optional: maak VM automatisch bootable op virtio0
+  boot = "order=scsi0"
 }
