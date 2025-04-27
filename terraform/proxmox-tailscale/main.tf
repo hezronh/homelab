@@ -8,19 +8,21 @@ terraform {
 }
 
 provider "proxmox" {
-  pm_api_url       = "https://192.168.68.70:8006/api2/json"
+  pm_api_url       = var.pm_api_url
   pm_tls_insecure = true
-  pm_user         = "root@pam"
-  pm_password     = var.proxmox_password
+  pm_user         = var.pm_user
+  pm_api_token_id = var.pm_api_token_id
+  pm_api_token_secret = var.pm_api_token_secret
 }
 
-resource "proxmox_vm_qemu" "tailscale_vm" {
-  name         = "tailscale-node"
+resource "proxmox_vm_qemu" "test_vm3" {
+  name         = "testvm3"
   target_node  = "pve"        # <-- de naam van je Proxmox node
-  clone        = "ubuntu-base-vm" # <-- de naam van je template, NIET de ID
+  clone        = "ubuntu2204-cloudinit" # <-- de naam van je template, NIET de ID
   full_clone   = true         # <-- aanbevolen voor cloud-init VM's
   agent        = 1            # QEMU Guest Agent inschakelen
   os_type      = "cloud-init"
+  vmid         = 201
   
   cores        = 1
   sockets      = 1
