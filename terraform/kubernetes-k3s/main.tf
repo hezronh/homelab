@@ -50,11 +50,11 @@ resource "proxmox_vm_qemu" "k3s-master" {
   ciuser     = var.ci_user
   cipassword = var.ci_passwd
   sshkeys    = var.vm_ssh_key
-  cicustom   = "vendor=local:snippets/qemu-guest-agent.yml"
+  cicustom   = var.cicustom
 }
 
 resource "proxmox_vm_qemu" "k3s-worker" {
-  count           = 2
+  count           = 1  # change count to how many workers you want (e.g. count = 2 means 2 workers)
   name            = "k3s-worker-${count.index + 1}"
   desc            = "Kubernetes Worker Node"
   target_node     = "pve"
@@ -106,7 +106,7 @@ resource "proxmox_vm_qemu" "k3s-worker" {
   ciuser     = var.ci_user
   cipassword = var.ci_passwd
   sshkeys    = var.vm_ssh_key
-  cicustom   = "vendor=local:snippets/qemu-guest-agent.yml"
+  cicustom   = var.cicustom
 }
 
 # Variables should be defined separately in variables.tf
