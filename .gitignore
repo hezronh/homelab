@@ -4,6 +4,7 @@
 *.tfvars
 *.tfvars.json
 .terraform/
+.terraform.lock.hcl
 crash.log
 override.tf
 override.tf.json
@@ -59,3 +60,4 @@ ansible/vars/secrets.yml.new
 terraform/terraform-cloudinit/user-data.yaml
 terraform/cloudinit-vm/variables.tf
 terraform/proxmox-tailscale/variables.tf
+terraform/kubernetes-k3s/.terraform.tfstate.lock.info
