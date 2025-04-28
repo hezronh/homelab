@@ -45,7 +45,7 @@ resource "proxmox_vm_qemu" "k3s-master" {
     id = 0
   }
 
-  ipconfig0  = "ip=192.168.68.21/24,gw=192.168.68.1"
+  ipconfig0  = "ip=192.168.68.20/24,gw=192.168.68.1"
   nameserver = "8.8.8.8 1.1.1.1"
   ciuser     = var.ci_user
   cipassword = var.ci_passwd
@@ -54,13 +54,13 @@ resource "proxmox_vm_qemu" "k3s-master" {
 }
 
 resource "proxmox_vm_qemu" "k3s-worker" {
-  count           = 1
+  count           = 2
   name            = "k3s-worker-${count.index + 1}"
   desc            = "Kubernetes Worker Node"
   target_node     = "pve"
   agent           = 1
   tags            = "K3s"
-  vmid            = 4001
+  vmid            = "400${count.index +1}" 
   clone           = "ubuntu-20.04-cloud-init-template"
   full_clone      = true
   onboot          = true
@@ -101,7 +101,7 @@ resource "proxmox_vm_qemu" "k3s-worker" {
     id = 0
   }
 
-  ipconfig0  = "ip=192.168.68.22/24,gw=192.168.68.1"
+  ipconfig0  = "ip=192.168.68.2${count.index +1}/24,gw=192.168.68.1"
   nameserver = "8.8.8.8 1.1.1.1"
   ciuser     = var.ci_user
   cipassword = var.ci_passwd
