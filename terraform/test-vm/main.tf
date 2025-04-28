@@ -1,12 +1,14 @@
-resource "proxmox_vm_qemu" "cloudinit-example" {
-  vmid        = 300
-  name        = "test-terraform0"
+resource "proxmox_vm_qemu" "create-vm" {
+  count       = 1
+  vmid        = "30${count.index +1}"
+  name        = "hftm-vm-${count.index +1}"
   target_node = "pve"
+  tags        = "VM,test"
   agent       = 1
   cores       = 2
   memory      = 1024
   boot        = "order=scsi0" # has to be the same as the OS disk of the template
-  clone       = "ubuntu-20.04-cloud-init-template" # The name of the template
+  clone       = "ubuntu-24.04-cloud-init-template" # The name of the template
   scsihw      = "virtio-scsi-single"
   vm_state    = "running"
   automatic_reboot = true
@@ -15,7 +17,7 @@ resource "proxmox_vm_qemu" "cloudinit-example" {
   cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
-  ipconfig0  = "ip=192.168.68.90/24,gw=192.168.68.1,ip6=dhcp"
+  ipconfig0  = "ip=192.168.68.9${count.index +1}/24,gw=192.168.68.1,ip6=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_passwd

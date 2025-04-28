@@ -61,3 +61,4 @@ terraform/terraform-cloudinit/user-data.yaml
 terraform/cloudinit-vm/variables.tf
 terraform/proxmox-tailscale/variables.tf
 terraform/kubernetes-k3s/.terraform.tfstate.lock.info
+terraform/test-vm/.terraform.tfstate.lock.info

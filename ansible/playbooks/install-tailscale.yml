@@ -1,0 +1,20 @@
+---
+- name: Install and configure Tailscale
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Install dependencies
+      apt:
+        name: curl
+        state: present
+        update_cache: yes
+
+    - name: Install Tailscale
+      shell: curl -fsSL https://tailscale.com/install.sh | sh
+
+    - name: Authenticate to Tailscale
+      shell: |
+        tailscale up --authkey {{ tailscale_authkey }}
+      args:
+        creates: /var/lib/tailscale/tailscaled.state
