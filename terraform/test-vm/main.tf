@@ -8,7 +8,7 @@ resource "proxmox_vm_qemu" "create-vm" {
   cores       = 2
   memory      = 1024
   boot        = "order=scsi0" # has to be the same as the OS disk of the template
-  clone       = "ubuntu-24.04-cloud-init-template" # The name of the template
+  clone_id       = 8000 # The ID of the template
   scsihw      = "virtio-scsi-single"
   vm_state    = "running"
   automatic_reboot = true
