@@ -1,12 +1,12 @@
 resource "proxmox_vm_qemu" "create-vm" {
   count       = 1
   vmid        = "30${count.index +1}"
-  name        = "hftm-vm-${count.index +1}"
+  name        = "hftm-vm-services-${count.index +1}"
   target_node = "pve"
-  tags        = "VM,test"
+  tags        = "VM, Services"
   agent       = 1
   cores       = 2
-  memory      = 1024
+  memory      = 2048
   boot        = "order=scsi0" # has to be the same as the OS disk of the template
   clone_id       = 8000 # The ID of the template
   scsihw      = "virtio-scsi-single"
