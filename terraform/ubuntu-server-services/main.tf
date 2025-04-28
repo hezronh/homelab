@@ -3,7 +3,7 @@ resource "proxmox_vm_qemu" "create-vm" {
   vmid        = "30${count.index +1}"
   name        = "hftm-vm-services-${count.index +1}"
   target_node = "pve"
-  tags        = "VM, Services"
+  tags        = "VM,Services"
   agent       = 1
   cores       = 2
   memory      = 2048
