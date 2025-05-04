@@ -1,0 +1,172 @@
+# ---
+# - name: Install and configure Pi-Hole on Docker
+#   hosts: docker
+#   become: true
+#   vars:
+#     container_count: 4
+#     default_container_name: docker
+#     default_container_image: ubuntu
+#     default_container_command: sleep 1d
+
+#   tasks:
+#     - name: Install aptitude
+#       ansible.builtin.apt:
+#         name: aptitude
+#         state: present
+#         update_cache: true
+
+
+#     - name: Install required system packages
+#       ansible.builtin.apt:
+#         pkg:
+#           - apt-transport-https
+#           - ca-certificates
+#           - curl
+#           - software-properties-common
+#           - python3-pip
+#           - virtualenv
+#           - python3-setuptools
+#         state: present
+#         update_cache: true
+
+#     - name: Add Docker GPG apt Key
+#       ansible.builtin.apt_key:
+#         url: https://download.docker.com/linux/ubuntu/gpg
+#         state: present
+
+#     - name: Add Docker Repository
+#       ansible.builtin.apt_repository:
+#         repo: deb https://download.docker.com/linux/ubuntu focal stable
+#         state: present
+
+#     - name: Update apt and install docker-ce
+#       ansible.builtin.apt:
+#         name: docker-ce
+#         state: present
+#         update_cache: true
+
+#     - name: Install Docker Module for Python
+#       ansible.builtin.pip:
+#         name: docker
+#         state: present
+
+#     - name: Pull default Docker image
+#       community.docker.docker_image:
+#         name: "{{ default_container_image }}"
+#         source: pull
+
+#     - name: Create default containers
+#       community.docker.docker_container:
+#         name: "{{ default_container_name }}{{ item }}"
+#         image: "{{ default_container_image }}"
+#         command: "{{ default_container_command }}"
+#         state: present
+#       with_sequence: count={{ container_count }}
+
+---
+- name: Install and configure Pi-hole on Docker
+  hosts: docker
+  become: true
+  vars_files:
+    - ../vars/secrets.yml
+  vars:
+    # General Docker config
+    default_container_name: pihole
+    default_container_image: pihole/pihole:latest
+    timezone: Europe/Amsterdam
+    pihole_password: "{{ vault_pihole_web_password }}"
+
+    # Volumes
+    pihole_config_dir: /etc/pihole
+    dnsmasq_config_dir: /etc/dnsmasq.d
+
+  tasks:
+    - name: Verify variable loading
+      ansible.builtin.debug:
+        var: vault_pihole_web_password
+
+    - name: Install aptitude
+      ansible.builtin.apt:
+        name: aptitude
+        state: present
+        update_cache: true
+      tags: install
+
+    - name: Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+        state: present
+        update_cache: true
+      tags: install
+
+    - name: Add Docker GPG apt Key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      tags: docker
+
+    - name: Add Docker Repository
+      ansible.builtin.apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+      tags: docker
+
+    - name: Update apt and install docker-ce
+      ansible.builtin.apt:
+        name: docker-ce
+        state: present
+        update_cache: true
+      tags: docker
+
+    - name: Install docker Python bindings via apt
+      ansible.builtin.apt:
+        name: python3-docker
+        state: present
+        update_cache: true
+
+    - name: Create Pi-hole config directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - "{{ pihole_config_dir }}"
+        - "{{ dnsmasq_config_dir }}"
+      tags: config
+
+    - name: Deploy Pi-hole container
+      community.docker.docker_container:
+        name: "{{ default_container_name }}"
+        image: "{{ default_container_image }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "53:53/tcp"
+          - "53:53/udp"
+          - "67:67/udp"
+          - "80:80/tcp"
+          - "443:443/tcp"
+        env:
+          TZ: "{{ timezone }}"
+          WEBPASSWORD: "{{ pihole_password }}"
+        volumes:
+          - "{{ pihole_config_dir }}:/etc/pihole"
+          - "{{ dnsmasq_config_dir }}:/etc/dnsmasq.d"
+        healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost/admin"]
+          interval: 90s
+          timeout: 10s
+          retries: 3
+        dns_servers:
+          - 127.0.0.1
+          - 1.1.1.1
+      tags: pihole

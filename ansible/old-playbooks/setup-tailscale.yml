@@ -1,9 +1,11 @@
 ---
+
+
 - name: Configure Tailscale Node
   hosts: tailscale
   become: true
   vars_files:
-    - ../vars/secrets.yml  # Bevat jouw tailscale_authkey via Ansible Vault
+    - /vars/secrets.yml  # Bevat jouw tailscale_authkey via Ansible Vault
 
   tasks:
     - name: Ensure SSH directory exists
@@ -58,10 +60,11 @@
 
     - name: Update apt cache
       ansible.builtin.apt:
-        update_cache: yes
+        update_cache: true
 
     - name: Check Tailscale package availability
-      ansible.builtin.shell: apt-cache policy tailscale
+      ansible.builtin.shell: |
+        apt-cache policy tailscale
       register: tailscale_package_info
       changed_when: false
 
@@ -74,7 +77,9 @@
         name: tailscale
         state: present
       register: tailscale_install
-      ignore_errors: true
+      retries: 3
+      delay: 10
+      until: tailscale_install is succeeded
 
     - name: Show Tailscale install result if failed
       ansible.builtin.debug:
@@ -86,8 +91,6 @@
         msg: "Auth key variable is: {{ tailscale_authkey | default('undefined') }}"
 
     - name: Connect to Tailscale with AuthKey
-      ansible.builtin.shell: |
-        tailscale up --authkey "{{ tailscale_authkey }}"
+      ansible.builtin.command: tailscale up --authkey "{{ tailscale_authkey }}"
       args:
-        executable: /bin/bash
         creates: /var/lib/tailscale/tailscaled.state

@@ -1,0 +1,20 @@
+---
+- name: Verwijder Pi-hole container en configuratie
+  hosts: docker
+  become: true
+
+  tasks:
+    - name: Stop and remove existing Pi-hole container (with volumes)
+      community.docker.docker_container:
+        name: pihole
+        state: absent
+        force_kill: true
+        keep_volumes: false
+
+    - name: Clean Pi-hole config directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/pihole
+        - /etc/dnsmasq.d

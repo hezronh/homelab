@@ -1,22 +1,37 @@
 ---
-
-
 - name: Install and configure Tailscale
   hosts: tailscale
   become: true
 
+  vars_files:
+    - /vars/secrets.yml  # Pas dit pad aan indien nodig
+
   tasks:
+
     - name: Install dependencies
-      apt:
+      ansible.builtin.apt:
         name: curl
         state: present
         update_cache: true
 
-    - name: Install Tailscale
-      shell: curl -fsSL https://tailscale.com/install.sh | sh
+    - name: Download Tailscale install script
+      ansible.builtin.get_url:
+        url: https://tailscale.com/install.sh
+        dest: /tmp/install-tailscale.sh
+        mode: '0755'
+
+    - name: Run Tailscale installer
+      ansible.builtin.command: /tmp/install-tailscale.sh
+      args:
+        creates: /usr/sbin/tailscaled
+
+    - name: Start and enable tailscaled service
+      ansible.builtin.systemd:
+        name: tailscaled
+        state: started
+        enabled: true
 
     - name: Authenticate to Tailscale
-      shell: |
-        tailscale up --authkey {{ tailscale_authkey }}
+      ansible.builtin.command: tailscale up --authkey={{ tailscale_authkey }}
       args:
         creates: /var/lib/tailscale/tailscaled.state

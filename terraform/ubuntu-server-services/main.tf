@@ -1,7 +1,7 @@
 resource "proxmox_vm_qemu" "create-vm" {
-  count       = 1
+  count       = 2
   vmid        = "30${count.index +1}"
-  name        = "hftm-vm-services-${count.index +1}"
+  name        = "hftm-vm-ubuntu-${count.index +1}"
   target_node = "pve"
   tags        = "VM,Services"
   agent       = 1
